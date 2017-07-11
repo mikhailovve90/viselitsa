@@ -5,7 +5,7 @@ class ResultPrinter
     counter = 0
 
     while counter <= 7 do
-      file_name = current_path + "/image/im#{counter}.txt"
+      file_name = current_path + "/../image/im#{counter}.txt"
       if File.exist?(file_name)
         f = File.new(file_name, "r:UTF-8")
         @status_image << f.read
