@@ -1,12 +1,18 @@
 require 'unicode_utils/downcase'
 
 class Game
+  attr_reader :errors, :letters, :good_letters, :bad_letters, :status
+
+  attr_accessor :version
+
+  MAX_ERRORS = 7
+
   def initialize(letters)
     @letters = get_letters(letters)
     @errors = 0
     @good_letters = []
     @bad_letters = []
-    @status = 0
+    @status = :in_progress # :won, :lost
   end
 
   def get_letters(letters)
@@ -25,53 +31,70 @@ class Game
     next_step(letter)
   end
 
+  def is_good?(letter)
+    @letters.include?(letter) ||
+      (@letters.include?("ё") && letter == "е") ||
+      (@letters.include?("е") && letter == "ё") ||
+      (@letters.include?("й") && letter == "и") ||
+      (@letters.include?("и") && letter == "й")
+  end
+
+  def add_letter_to(letters, letter)
+    letters << letter
+
+    case letter
+    when "и" then letters.push("й")
+    when "й" then letters.push("и")
+    when "е" then letters.push("ё")
+    when "ё" then letters.push("е")
+    end
+  end
+
+  def solved?
+    (@letters.uniq - @good_letters).empty?
+  end
+
+  def repeated?(letter)
+    @good_letters.include?(letter) || @bad_letters.include?(letter)
+  end
+
+  def lost?
+    @errors >= MAX_ERRORS
+  end
+
+  def in_progress?
+    @status == :in_progress
+  end
+
+  def won?
+    @status == :won
+  end
+
+  def lost?
+    @status == :lost  || @errors >= MAX_ERRORS
+  end
+
   def next_step(letter)
-    if @status == -1 || @status == 1
-      return
-    end
+    return if @status == :lost || @status == :won
+    return if repeated?(letter)
 
-    if @good_letters.include?(letter) ||
-      @bad_letters.include?(letter)
-      return 0
-    end
+    if is_good?(letter)
+      add_letter_to(@good_letters, letter)
 
-    if(@letters.include?("ё") && letter == "е") || (@letters.include?("е") && letter == "ё")
-      @good_letters.push("е")
-      @good_letters.push(letter)
-    elsif(@letters.include?("й") && letter == "и") || (@letters.include?("и") && letter == "й")
-      @good_letters.push("и")
-      @good_letters.push(letter)
-    elsif @letters.include?(letter)
-      @good_letters.push(letter)
-      if @letters.uniq - @good_letters == []
-        @status = 1
-      end
+      @status = :won if solved?
     else
-      @bad_letters.push(letter)
+      add_letter_to(@bad_letters, letter)
       @errors += 1
-      if @errors >= 7
-        @status = -1
-      end
+
+      @status = :lost if lost?
     end
   end
 
-  def status
-    @status
+  def max_errors
+    MAX_ERRORS
   end
 
-  def errors
-    @errors
-  end
-
-  def letters
-    @letters
-  end
-
-  def good_letters
-    @good_letters
-  end
-
-  def bad_letters
-    @bad_letters
+  def errors_left
+    MAX_ERRORS - @errors
   end
 end
