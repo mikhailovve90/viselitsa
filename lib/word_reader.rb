@@ -3,15 +3,19 @@ class WordReader
     @lines = []
   end
 
-  def read_from_file(address)
-    if File.exist?(address)
-      f = File.new(address,"r:UTF-8")
+  def file_exist?(path)
+    File.exist?(path)
+  end
+
+  def read_from_file(path)
+    if file_exist?(path)
+      f = File.new(path, "r:UTF-8")
       @lines = f.readlines
-      f.close #закрытие файла
+      f.close
     else
       puts "Файл не найден"
     end
-    return @lines.sample.chomp
+    @lines.sample.chomp
   end
 end
 
